@@ -25,21 +25,21 @@ For more details of any block click on it in the link above.
 
 Para adicionar um novo bloco ao moodle procure o botão **"Personalizar esta página"** e clique nele. 
 
-![botão de personalizar página do moodle](https://github.com/LucasVerdade/moodle-activity-grade-checker/blob/develop/docs/customize_moodle.jpg?raw=true)   
+![botão de personalizar página do moodle](https://github.com/LucasVerdade/moodle-custom-blocks/blob/main/docs/html-block-img/customize_moodle.jpg?raw=true)   
 
 
 Após isso, procure o bloco chamado __"ADICIONAR UM BLOCO"__ e selecione a opção __"HTML"__.  
 
 Então, um novo bloco chamado __"Novo bloco HTML"__ irá aparecer. Procure ele e clique no ícone de engrenagem e, em seguida, na opção __"Configurar bloco"__.  
   
-![Adicionar e editar novo bloco](https://github.com/LucasVerdade/moodle-activity-grade-checker/blob/develop/docs/edit_new_block.jpg?raw=true)   
+![Adicionar e editar novo bloco](https://github.com/LucasVerdade/moodle-custom-blocks/blob/main/docs/html-block-img/edit_new_block.jpg?raw=true)   
 
 Ao clicar nessa opção você será redirecionado para uma página de edição do bloco, mas a opção de editar o HTML estará _'oculta'_.  
-![Editor padrão](https://github.com/LucasVerdade/moodle-activity-grade-checker/blob/develop/docs/default_editor_options.jpg?raw=true)  
+![Editor padrão](https://github.com/LucasVerdade/moodle-custom-blocks/blob/main/docs/html-block-img/default_editor_options.jpg?raw=true)  
   
 
 Para que possa editar o HTML clique no primeiro ícone dentro de _"Conteúdo"_ chamado **"Expandir/contrair barra de ferramentas".**  
-![Opções avançadas do editor](https://github.com/LucasVerdade/moodle-activity-grade-checker/blob/develop/docs/more_editor_options.jpg?raw=true)   
+![Opções avançadas do editor](https://github.com/LucasVerdade/moodle-custom-blocks/blob/main/docs/html-block-img/more_editor_options.jpg?raw=true)   
 Então, clique na opção **"Editar código HTML"** com ícone de **"<>"**.  
 Um pop-up irá aparecer e nele você pode escrever, ou no caso de algum bloco copiar o código HTML dele.  
 
