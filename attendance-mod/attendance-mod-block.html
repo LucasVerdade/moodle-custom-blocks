@@ -1,0 +1,201 @@
+<div id="attendance-mod-container">
+    <div id="header-att-container"></div>
+    <div id="semester-container">
+        <span id="semester-label"></span>
+        <ul id="courses-attendance-list">
+            <!-- <li>
+                <span id="course-label"></span>
+                <span id="course-att-status"></span>
+            </li> -->
+        </ul>
+    </div>
+</div>
+<script>
+    function saveToLocalStorage(key, value) {
+        if (key == null || value == null) {
+            return false;
+        }
+        let currentValue = localStorage.getItem(key);
+        if (currentValue != null && currentValue === value) {
+            return false;
+        }
+        localStorage.setItem(key, value);
+    }
+    /**
+     * 
+     * @param {string | number} courseId 
+     * @param {string} status 
+     * @returns HTMLElement like:
+     * <li id=`${courseId}-li`>
+     *  <span class="course-label">{courseId}</span>
+     *  <span class="course-att-status">{status}</span>
+     * </li>
+     */
+    function createCourseAttLiElement(courseObj) {
+        let status = !courseObj.availableAttendances ? "There is no attendance" : `Marked '${courseObj.optionText}'`;
+
+        let liItem = document.createElement("li");
+        liItem.setAttribute("id", `${courseObj.id}-li`);
+
+        let nameLink = document.createElement("a");
+        nameLink.setAttribute("class", "course-label");
+        nameLink.textContent = courseObj.courseCode;
+        nameLink.href = courseObj.courseUrl;
+
+        let divider = document.createElement("span");
+        divider.textContent = " | ";
+
+        let statusSpan = document.createElement("span");
+        statusSpan.setAttribute("class", "course-att-status");
+        statusSpan.textContent =  status;
+        statusSpan.setAttribute("class", courseObj.availableAttendances ? "level3 category" : "");
+
+
+        liItem.appendChild(nameLink);
+        liItem.appendChild(divider);
+        liItem.appendChild(statusSpan);
+
+        return liItem;
+    }
+
+    // 
+    async function fetchDoc(url) {
+        return fetch(url)
+            .then((response) => {
+                return response.text();
+            })
+            .then(async (html) => {
+                let parser = new DOMParser();
+                let parsedPage = await parser.parseFromString(html, "text/html");
+                return parsedPage;
+            })
+            .catch((error) => {
+                console.log(error);
+                return error;
+            });
+    }
+    function getSemestersElements(doc) {
+        return doc.querySelectorAll(".block_ufsc_course_list .content .generalbox");
+    }
+
+    function getCoursesElements(semesterDocElement) {
+        return semesterDocElement.querySelectorAll("ul li");
+    }
+    function getIdfromHref(hrefString) {
+        let id = String(hrefString).split("?id=");
+        id = id[id.length - 1].split("&")[0];
+        return id.trim();
+    }
+
+    async function markAttendance(id, key, value) {
+        return await fetch("https://moodle.ufsc.br/mod/attendance/attendance.php", {
+            credentials: "include",
+            headers: {
+                "User-Agent":
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:93.0) Gecko/20100101 Firefox/93.0",
+                Accept:
+                    "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                "Accept-Language": "pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Upgrade-Insecure-Requests": "1",
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "cross-site",
+                "Sec-Fetch-User": "?1",
+                "Sec-GPC": "1",
+            },
+            body: `sessid=${id}&sesskey=${key}&sesskey=${key}&_qf__mod_attendance_student_attendance_form=1&mform_isexpanded_id_session=1&status=${value}&submitbutton=Salvar+mudan%C3%A7as`,
+            method: "POST",
+            mode: "cors",
+        });
+    }
+    async function appendLi(courseResult) {
+        let attUl = document.querySelector("ul#courses-attendance-list");
+        let newElement = createCourseAttLiElement(courseResult);
+        attUl.appendChild(newElement);
+    }
+
+    async function markAvailableAttendances(doc) {
+        let semesters = getSemestersElements(doc);
+        // Run only for the last semester
+        let courses = semesters[0].querySelectorAll("ul li a");
+
+        [...courses].map(async (course) => {
+            let courseId = getIdfromHref(course.href);
+            let courseCode = course.title.split("-")[0];
+            let attPage = await fetchDoc(
+                `https://moodle.ufsc.br/mod/attendance/index.php?id=${courseId}`
+            );
+
+            let attendancesLink = attPage.querySelectorAll(".generaltable a");
+            [...attendancesLink].map(async (attendance) => {
+                let attendancesListPageUrl = `${String(attendance.href)}&view=5`;
+                let attendanceListPage = await fetchDoc(attendancesListPageUrl);
+                let availableSelfAttendaces =
+                    attendanceListPage.querySelectorAll(".generaltable a");
+                if (availableSelfAttendaces.length <= 0) {
+                    appendLi({ id: courseId, courseCode: courseCode, courseUrl: attendancesListPageUrl, availableAttendances: false });
+                } else {
+                    [...availableSelfAttendaces].map(async (selfAttLink) => {
+                        let sesskey = String(selfAttLink.href).split("sesskey=")[1].split("&")[0];
+                        let sessid = String(selfAttLink.href).split("sessid=")[1].split("&")[0];
+                        let selfAttPage = await fetchDoc(selfAttLink.href);
+
+                        // let options = selfAttPage.querySelectorAll("input[id^=id_status]");
+                        let options = [...selfAttPage.querySelector(".felement").children];
+
+                        // From here you can create an option selector and use its index to get the correct value.
+                        let optionIndex = localStorage[`${courseId}-option-index`] ? localStorage[`${courseId}-option-index`] : 0;
+                        let value = options[optionIndex].querySelector("input").value;
+                        let result = await markAttendance(sessid, sesskey, value);
+                        appendLi({ id: courseId,  courseCode: courseCode, courseUrl: attendancesListPageUrl, availableAttendances: true, optionText: options[optionIndex].textContent.trim(), optionIndex: optionIndex, timestamp: Date.now() })
+                    });
+                }
+            });
+        });
+    }
+
+    async function checkAttendances() {
+        let attUl = document.querySelector("ul#courses-attendance-list");
+        attUl.innerHTML = '';
+        await markAvailableAttendances(document);
+    }
+
+    function createControlButtons() {
+        let container = document.querySelector("#header-att-container");
+        let checkBtn = document.createElement("BUTTON");
+
+        checkBtn.textContent = "Check";
+        checkBtn.onclick = async () => await checkAttendances();
+
+        let autoRunToggleButton = document.createElement("BUTTON");
+        const autoRunVal = localStorage.getItem("autoRun-selfAttendanceBot");
+        const currentAutoRunVal = localStorage.getItem("autoRun-selfattendancebot");
+        autoRunToggleButton.textContent = currentAutoRunVal === "true" ? "Auto":"Manual";
+        autoRunToggleButton.setAttribute("id","auto-run-toggle");
+        autoRunToggleButton.onclick = () => {
+            const currentVal = localStorage.getItem("autoRun-selfattendancebot");
+            localStorage.setItem("autoRun-selfattendancebot", currentVal === "true"? "false" : "true");
+            
+            const selfBtn = document.querySelector("#auto-run-toggle");
+            if (selfBtn) {
+                selfBtn.textContent = currentVal === "true"? "Manual" : "Auto";
+            }
+        }
+
+        container.appendChild(checkBtn);
+        container.appendChild(autoRunToggleButton);
+    }
+
+    createControlButtons();
+    // By default activates auto run.
+    const autoRun = localStorage.getItem("autoRun-selfattendancebot");
+    if (typeof(autoRun) === "undefined") {
+        localStorage.setItem("autoRun-selfattendancebot", "true")
+    }
+
+    if (localStorage.getItem("autoRun-selfattendancebot") === "true") {
+        checkAttendances();
+    }
+
+</script>
