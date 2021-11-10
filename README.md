@@ -12,7 +12,7 @@ Sinta-se livre para dar sugestões, abrir _issues_, _pull requests_ ou me mandar
 
 ## Current available blocks
 - Activity grade checker (beta);
-- Self attendance auto marker (coming soon);
+- [Self attendance auto marker (working prototype available! :D)](https://github.com/LucasVerdade/moodle-custom-blocks/tree/main/attendance-mod);
 
 For more details of any block click on it in the link above.   
 
